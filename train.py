@@ -1,13 +1,13 @@
 import pandas as pd
 
-drug_df = pd.read_csv("Data/drug200.csv")
-drug_df = drug_df.sample(frac=1)
-drug_df.head(3)
+ad_df = pd.read_csv("Data/ad_click_dataset.csv")
+ad_df = ad_df.sample(frac=1, random_state=42)
+ad_df.head(3)
 
 from sklearn.model_selection import train_test_split
 
-X = drug_df.drop("Drug", axis=1).values
-y = drug_df.Drug.values
+X = ad_df.drop(["id", "full_name", "click"], axis=1)
+y = ad_df["click"].values
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.3, random_state=125
@@ -19,22 +19,29 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OrdinalEncoder, StandardScaler
 
-cat_col = [1,2,3]
-num_col = [0,4]
+cat_col = ["gender", "device_type", "ad_position", "browsing_history", "time_of_day"]
+num_col = ["age"]
 
-transform = ColumnTransformer(
-    [
-        ("encoder", OrdinalEncoder(), cat_col),
-        ("num_imputer", SimpleImputer(strategy="median"), num_col),
-        ("num_scaler", StandardScaler(), num_col),
-    ]
-)
-pipe = Pipeline(
-    steps=[
-        ("preprocessing", transform),
-        ("model", RandomForestClassifier(n_estimators=100, random_state=125)),
-    ]
-)
+cat_transformer = Pipeline([
+    ("imputer", SimpleImputer(strategy="most_frequent")),
+    ("encoder", OrdinalEncoder())
+])
+
+num_transformer = Pipeline([
+    ("imputer", SimpleImputer(strategy="median")),
+    ("scaler", StandardScaler())
+])
+
+transform = ColumnTransformer([
+    ("cat", cat_transformer, cat_col),
+    ("num", num_transformer, num_col)
+])
+
+pipe = Pipeline([
+    ("preprocessing", transform),
+    ("model", RandomForestClassifier(n_estimators=100, random_state=125)),
+])
+
 pipe.fit(X_train, y_train)
 
 from sklearn.metrics import accuracy_score, f1_score
@@ -58,8 +65,8 @@ plt.savefig("Results/model_results.png", dpi=120)
 
 import skops.io as sio
 
-sio.dump(pipe, "Model/drug_pipeline.skops")
+sio.dump(pipe, "Model/ad_click_pipeline.skops")
 
 import skops.io as sio
 
-pipe_loaded = sio.load("Model/drug_pipeline.skops", trusted=['numpy.dtype'])
+pipe_loaded = sio.load("Model/ad_click_pipeline.skops",    trusted=['numpy.dtype', 'sklearn.compose._column_transformer._RemainderColsList'])
