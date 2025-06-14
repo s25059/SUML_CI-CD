@@ -22,25 +22,27 @@ from sklearn.preprocessing import OrdinalEncoder, StandardScaler
 cat_col = ["gender", "device_type", "ad_position", "browsing_history", "time_of_day"]
 num_col = ["age"]
 
-cat_transformer = Pipeline([
-    ("imputer", SimpleImputer(strategy="most_frequent")),
-    ("encoder", OrdinalEncoder())
-])
+cat_transformer = Pipeline(
+    [
+        ("imputer", SimpleImputer(strategy="most_frequent")),
+        ("encoder", OrdinalEncoder()),
+    ]
+)
 
-num_transformer = Pipeline([
-    ("imputer", SimpleImputer(strategy="median")),
-    ("scaler", StandardScaler())
-])
+num_transformer = Pipeline(
+    [("imputer", SimpleImputer(strategy="median")), ("scaler", StandardScaler())]
+)
 
-transform = ColumnTransformer([
-    ("cat", cat_transformer, cat_col),
-    ("num", num_transformer, num_col)
-])
+transform = ColumnTransformer(
+    [("cat", cat_transformer, cat_col), ("num", num_transformer, num_col)]
+)
 
-pipe = Pipeline([
-    ("preprocessing", transform),
-    ("model", RandomForestClassifier(n_estimators=100, random_state=125)),
-])
+pipe = Pipeline(
+    [
+        ("preprocessing", transform),
+        ("model", RandomForestClassifier(n_estimators=100, random_state=125)),
+    ]
+)
 
 pipe.fit(X_train, y_train)
 
@@ -69,4 +71,7 @@ sio.dump(pipe, "Model/ad_click_pipeline.skops")
 
 import skops.io as sio
 
-pipe_loaded = sio.load("Model/ad_click_pipeline.skops",    trusted=['numpy.dtype', 'sklearn.compose._column_transformer._RemainderColsList'])
+pipe_loaded = sio.load(
+    "Model/ad_click_pipeline.skops",
+    trusted=["numpy.dtype", "sklearn.compose._column_transformer._RemainderColsList"],
+)
