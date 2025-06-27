@@ -1,3 +1,5 @@
-scikit-learn
-skops
 gradio
+skops
+pandas
+scikit-learn
+numpy
